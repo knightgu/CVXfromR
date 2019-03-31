@@ -112,16 +112,18 @@ CallMatlab <- function(matlab.code, inputs = list(), output.names = NULL,
       input.name <- names(inputs)[i]
       if (!is.numeric(inputs[[i]]))
         stop(sprintf("All inputs must be numeric! (Check %s)", input.name))
+      if (!is.vector(inputs[[i]]) && !is.matrix(inputs[[i]]) &&
+          !is.data.frame(inputs[[i]]))
+        stop(sprintf(paste0("All inputs must be vectors, matrices, ",
+                            "or data frames! (Check %s)"), input.name))
       ## file <- sprintf("temp_in_%s.txt", input.name)
       file <- tempfile(pattern = sprintf("temp_in_%s_%s.txt", input.name,
                                          unique.string), fileext = ".txt")
-      utils::write.table(inputs[[i]],
-                         file = file,
-                         row.names = FALSE,
-                         col.names = FALSE)
+      utils::write.table(inputs[[i]], file = file,
+                         row.names = FALSE, col.names = FALSE)
       ## FORM MATLAB EXPRESSION TO READ IN THIS FILE
       before <- sprintf(paste0("%s disp('Reading %s into Matlab...'); ",
-                               "%s = dlmread('%s');"),
+                               "%s = readmatrix('%s');"),
                         before, input.name, input.name, file)
       infiles <- c(infiles, file)
     }
@@ -134,8 +136,7 @@ CallMatlab <- function(matlab.code, inputs = list(), output.names = NULL,
       file <- tempfile(pattern = sprintf("temp_out_%s_%s.txt", out,
                                          unique.string),
                        fileext = ".txt")
-      after <- sprintf("%s dlmwrite('%s', full(%s), 'precision', '%s10.10f');",
-                       after, file, out, "%")
+      after <- sprintf("%s writematrix(full(%s), '%s');", after, out, file)
       outfiles <- c(outfiles, file)
     }
   }
